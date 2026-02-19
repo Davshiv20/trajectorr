@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Surfaces */
+  --bg-base: #CDC5B4;
+  --bg-card: #F5F3EF;
+  --bg-cell-empty: #E5DFD3;
+  --bg-cell-logged: #6B8068;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --process-code: #6B8068;
+  /* Process Colors
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --process-run: #7A8B9A;
+  --process-read: #C47F5A;
+  --process-zen: #6B9A8A; */
+  
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-muted: #9A9A9A;
+  
+  /* Accents */
+  --accent-steady: #4A7A6A;
+  --accent-steady-bg: #E8F0ED;
+  
+  /* Card glow */
+  --glow-color: rgba(139, 157, 195, 0.4);
+  
+  /* Grid sizing */
+  --cell-size: 36px;
+  --cell-gap: 6px;
+  --cell-radius: 6px;
+  
+  /* Typography */
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  min-height: 100dvh;
+}
+
+/* Main card container with glow */
+.card-main {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: 
+    0 0 0 1px rgba(139, 157, 195, 0.2),
+    0 0 40px var(--glow-color),
+    0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Grid cells */
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: var(--cell-radius);
+  transition: transform 0.1s ease, opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.cell:hover {
+  transform: scale(1.08);
+}
+
+.cell-empty {
+  background: var(--bg-cell-empty);
+}
+
+.cell-logged {
+  background: var(--bg-cell-logged);
+}
+/* .cell-run { background: var(--process-run); }
+.cell-read { background: var(--process-read); }
+.cell-zen { background: var(--process-zen); } */
+
+/* Trajectory cards */
+.trajectory-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  border-left: 3px solid var(--accent-steady);
+  padding: 16px 20px;
+}
+
+/* Status badge */
+.badge-steady {
+  background: var(--accent-steady-bg);
+  color: var(--accent-steady);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* Section labels */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #535353;
+  text-transform: uppercase;
 }
