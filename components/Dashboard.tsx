@@ -7,7 +7,7 @@ import { useAuth } from "../lib/auth";
 
 import { Login } from "./Login";
 import { TrajectoryCard } from "./TrajectoryCard";
-import { getProcesses, getLogs, toggleLog, createProcess } from "../lib/data";
+import { getProcesses, getLogs, toggleLog, createProcess, archiveProcess } from "../lib/data";
 import type { Process, Log } from "../lib/database.types";
 import { AddProcessModal } from "./AddProcessModal";
 import { UserMenu } from "./UserMenu";
@@ -59,12 +59,18 @@ export function Dashboard() {
 
   const handleAddProcess = async (name: string, category: string, key: string) => {
     if (!user) return;
-    
+
     const newProcess = await createProcess(name, category, key, user.id);
     if (newProcess) {
       setProcesses((prev) => [...prev, newProcess]);
     }
   };
+
+  const handleDeleteProcess = useCallback(async (processId: string) => {
+    setProcesses((prev) => prev.filter((p) => p.id !== processId));
+    setLogs((prev) => prev.filter((l) => l.process_id !== processId));
+    await archiveProcess(processId);
+  }, []);
   
 
   const handleToggle = useCallback(async (processId: string, date: Date) => {
@@ -273,6 +279,7 @@ export function Dashboard() {
                   key={process.id}
                   process={process}
                   logs={getLogsForProcess(process.id)}
+                  onDelete={handleDeleteProcess}
                 />
               ))
             )}

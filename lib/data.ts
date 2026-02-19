@@ -19,19 +19,23 @@ export async function getProcesses(): Promise<Process[]> {
   return (data as Process[]) || [];
 }
 
-// Fetch all logs for the current user's processes
+// Fetch logs only for active (non-archived) processes
 export async function getLogs(): Promise<Log[]> {
+  type LogWithRelation = Log & { processes: { id: string } };
+
   const { data, error } = await supabase
     .from('logs')
-    .select('*')
-    .order('logged_at', { ascending: false });
+    .select('id, process_id, logged_at, created_at, processes!inner(id)')
+    .is('processes.archived_at', null)
+    .order('logged_at', { ascending: false })
+    .returns<LogWithRelation[]>();
 
   if (error) {
     console.error('Error fetching logs:', error);
     return [];
   }
 
-  return (data as Log[]) || [];
+  return (data?.map(({ processes: _, ...log }) => log) ?? []);
 }
 
 // Toggle a log (add if not exists, remove if exists)

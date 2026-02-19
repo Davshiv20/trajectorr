@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateInsight } from "../../../lib/ai-insights";
-import { supabase } from "../../../lib/supabase";
+import { supabaseAdmin } from "../../../lib/supabase";
 import type { Process } from "../../../lib/database.types";
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check cache
-    const { data: process, error: fetchError } = await supabase
+    const { data: process, error: fetchError } = await supabaseAdmin
       .from('processes')
       .select('*')
       .eq('id', processId)
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       ai_insight_updated_at: new Date().toISOString(),
     };
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('processes')
       // @ts-ignore - Supabase type inference issue
       .update(updateData)

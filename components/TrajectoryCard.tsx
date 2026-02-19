@@ -15,6 +15,7 @@ interface TrajectoryCardProps {
     ai_insight_log_count: number | null;
   };
   logs: LogEntry[];
+  onDelete?: (processId: string) => void;
 }
 
 function getTagStyle(tag: string): { className: string; borderColor: string } {
@@ -36,14 +37,18 @@ function getTagStyle(tag: string): { className: string; borderColor: string } {
   return { className: 'bg-[var(--accent-steady-bg)] text-[var(--accent-steady)]', borderColor: 'var(--accent-steady)' };
 }
 
-export function TrajectoryCard({ process, logs }: TrajectoryCardProps) {
+export function TrajectoryCard({ process, logs, onDelete }: TrajectoryCardProps) {
   const trajectory = analyzeProcess(logs);
 
   // Use cached values from DB as initial state
   const cacheValid = process.ai_insight_log_count === logs.length && process.ai_insight !== null;
+
+  console.log(process, process.ai_insight_log_count, logs.length, cacheValid);
   const [aiTag, setAiTag] = useState<string | null>(cacheValid ? process.ai_tag : null);
   const [aiInsight, setAiInsight] = useState<string | null>(cacheValid ? process.ai_insight : null);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const confirmTimerRef = useRef<NodeJS.Timeout | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -59,7 +64,7 @@ export function TrajectoryCard({ process, logs }: TrajectoryCardProps) {
     }
 
     // Need 3+ logs for meaningful AI analysis
-    if (logs.length < 4) {
+    if (logs.length < 3) {
       setAiTag(null);
       setAiInsight(null);
       setIsLoading(false);
@@ -128,13 +133,38 @@ export function TrajectoryCard({ process, logs }: TrajectoryCardProps) {
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-semibold text-[var(--text-primary)]">
-            {process.name}
-          </h3>
-          <p className="text-xs text-[var(--text-muted)]">
-            {process.category}
-          </p>
+        <div className="flex items-start gap-2">
+          {onDelete && (
+            <button
+              onClick={() => {
+                if (confirmDelete) {
+                  if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+                  setConfirmDelete(false);
+                  onDelete(process.id);
+                } else {
+                  setConfirmDelete(true);
+                  confirmTimerRef.current = setTimeout(() => setConfirmDelete(false), 2000);
+                }
+              }}
+              className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center text-sm leading-none transition-all duration-150 ${
+                confirmDelete
+                  ? 'bg-red-100 text-red-500 scale-110'
+                  : 'bg-[var(--bg-cell-empty)] text-[var(--text-muted)] hover:bg-red-50 hover:text-red-400'
+              }`}
+              aria-label={confirmDelete ? 'Confirm remove process' : 'Remove process'}
+              title={confirmDelete ? 'Click again to confirm' : 'Remove process'}
+            >
+              &minus;
+            </button>
+          )}
+          <div>
+            <h3 className="font-semibold text-[var(--text-primary)]">
+              {process.name}
+            </h3>
+            <p className="text-xs text-[var(--text-muted)]">
+              {process.category}
+            </p>
+          </div>
         </div>
         <span className={`text-xs font-semibold px-2 py-1 rounded ${isLoading && !aiTag ? 'bg-gray-100 text-gray-400 animate-pulse' : tagStyle.className}`}>
           {isLoading && !aiTag ? '...' : displayTag}
