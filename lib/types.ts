@@ -10,11 +10,10 @@ export interface ProcessTrajectory {
     trend: 'up' | 'down' | 'stable';
   };
   
-  // Consistency (how regular are the gaps?)
+  // Consistency (last 30 days)
   consistency: {
-    score: number;          // 0-100, higher = more regular
-    avgGapDays: number;     // e.g., 1.7 days between logs
-    gapVariance: number;    // low = consistent, high = erratic
+    score: number;          // 0-100, (daysLogged / 30) * 100
+    daysLogged: number;     // unique days logged in last 30 days
   };
   
   // Recency

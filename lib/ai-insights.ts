@@ -53,7 +53,7 @@ export async function generateInsight(
 Data:
 - Status: ${trajectory.status}
 - Frequency: ${trajectory.frequency.perWeek}/week (${trajectory.frequency.perMonth}/month), trend: ${trajectory.frequency.trend}
-- Consistency: ${trajectory.consistency.score}% (avg gap: ${trajectory.consistency.avgGapDays} days)
+- Consistency: ${trajectory.consistency.score}% (${trajectory.consistency.daysLogged}/30 days logged)
 - Pattern: ${trajectory.patterns.strongestDay ? `${trajectory.patterns.strongestDay}s show uptick` : 'No clear day pattern'}
 - Weekend bias: ${trajectory.patterns.weekendBias > 0.2 ? 'weekend-heavy' : trajectory.patterns.weekendBias < -0.2 ? 'weekday-heavy' : 'balanced'}
 - 30-day projection: ${trajectory.projection.thirtyDay} sessions (confidence: ${trajectory.projection.confidence})

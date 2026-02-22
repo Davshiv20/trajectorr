@@ -237,7 +237,7 @@ export function Dashboard() {
 </header>
 
 
-        <section className="mt-6 w-fit mx-auto">
+        <section className="mt-6 w-fit max-w-[720px] mx-auto">
           <div className="flex justify-between items-center mb-4">
             <span className="section-label">Activity Log</span>
             <div className="flex gap-3 text-xs text-[var(--text-muted)]">

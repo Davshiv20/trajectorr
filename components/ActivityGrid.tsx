@@ -44,13 +44,13 @@ export function ActivityGrid({
   const viewportWidth = VISIBLE_CELLS * CELL_PX - 6; // subtract last gap
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start ">
       {/* Fixed left column: Process labels */}
-      <div className="w-20 shrink-0 space-y-3">
+      <div className="w-16 shrink-0 space-y-3">
         <div className="h-6" />
         {processes.map((process) => (
           <div key={process.id} className="h-[var(--cell-size)] flex flex-col justify-center">
-            <div className="font-medium text-sm">{process.name}</div>
+            <div className="min-w-0 font-medium text-sm truncate" title={process.name}>{process.name}</div>
             <div className="text-xs text-[var(--text-muted)]">{process.category}</div>
           </div>
         ))}
@@ -60,7 +60,7 @@ export function ActivityGrid({
       <button
         onClick={() => setOffset((o) => Math.max(0, o - STEP))}
         disabled={!canGoLeft}
-        className="mt-6 shrink-0 w-7 h-[var(--cell-size)] flex items-center justify-center rounded text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-cell-empty)] transition-colors disabled:opacity-20 disabled:pointer-events-none"
+        className="mt-6 mx-1 shrink-0 w-7 h-[var(--cell-size)] flex items-center justify-center rounded text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-cell-empty)] transition-colors disabled:opacity-20 disabled:pointer-events-none"
         aria-label="Show earlier dates"
       >
         &larr;
@@ -111,7 +111,7 @@ export function ActivityGrid({
       <button
         onClick={() => setOffset((o) => Math.min(maxOffset, o + STEP))}
         disabled={!canGoRight}
-        className="mt-6 shrink-0 w-7 h-[var(--cell-size)] flex items-center justify-center rounded text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-cell-empty)] transition-colors disabled:opacity-20 disabled:pointer-events-none"
+        className="mt-6 shrink-0 mx-1 w-7 h-[var(--cell-size)] flex items-center justify-center rounded text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-cell-empty)] transition-colors disabled:opacity-20 disabled:pointer-events-none"
         aria-label="Show later dates"
       >
         &rarr;
