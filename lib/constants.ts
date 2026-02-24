@@ -30,3 +30,7 @@ export const CONFIDENCE_LOW_THRESHOLD = 40;
 
 // ── Status ──
 export const DORMANT_THRESHOLD_DAYS = 14;
+
+// ── AI Insight ──
+export const AI_INSIGHT_MIN_LOGS = 3;
+export const AI_INSIGHT_REFETCH_DELTA = 3;

@@ -38,71 +38,41 @@ export async function getLogs(): Promise<Log[]> {
   return (data?.map(({ processes: _, ...log }) => log) ?? []);
 }
 
-// Toggle a log (add if not exists, remove if exists)
+// Toggle a log — caller provides the intended action to avoid a SELECT precheck
 export async function toggleLog(
-  processId: string, 
-  date: Date
+  processId: string,
+  dateKey: string,
+  shouldAdd: boolean
 ): Promise<{ action: 'added' | 'removed'; log?: Log }> {
-  const dateKey = date.toISOString().split('T')[0];
-
-  // Check if log exists
-  const { data: existing, error: fetchError } = await supabase
-    .from('logs')
-    .select('*')
-    .eq('process_id', processId)
-    .eq('logged_at', dateKey)
-    .maybeSingle();
-
-  // Only throw on actual errors, not "not found"
-  if (fetchError) {
-    console.error('Error checking log:', fetchError);
-    throw fetchError;
-  }
-
-  if (existing) {
-    // Remove existing log
-    const log = existing as Log;
-    const { error } = await supabase
-      .from('logs')
-      .delete()
-      .eq('id', log.id);
-
-    if (error) {
-      console.error('Error removing log:', error);
-      throw error;
-    }
-
-    return { action: 'removed' };
-  } else {
-    // Add new log
+  if (shouldAdd) {
     const { data, error } = await supabase
       .from('logs')
-      .insert({
-        process_id: processId,
-        logged_at: dateKey,
-      } as any)
+      .insert({ process_id: processId, logged_at: dateKey } as LogInsert)
       .select()
       .single();
 
     if (error) {
-      // If it's a duplicate key error, just fetch and return the existing one
-      if (error.code === '23505') { // PostgreSQL unique violation code
-        const { data: existingLog } = await supabase
-          .from('logs')
-          .select('*')
-          .eq('process_id', processId)
-          .eq('logged_at', dateKey)
-          .single();
-        
-        return { action: 'added', log: existingLog ? existingLog as Log : undefined };
-      }
-      
+      // Duplicate — silently treat as success
+      if (error.code === '23505') return { action: 'added' };
       console.error('Error adding log:', error);
       throw error;
     }
 
     return { action: 'added', log: data as Log };
   }
+
+  const { error } = await supabase
+    .from('logs')
+    .delete()
+    .eq('process_id', processId)
+    .eq('logged_at', dateKey);
+
+  if (error) {
+    console.error('Error removing log:', error);
+    throw error;
+  }
+
+  return { action: 'removed' };
 }
 
 // Add a new process

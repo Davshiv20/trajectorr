@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateInsight } from "../../../lib/ai-insights";
 import { supabaseAdmin } from "../../../lib/supabase";
+import { decodeId } from "../../../lib/obfuscate";
 import type { Process } from "../../../lib/database.types";
 
 export async function POST(request: NextRequest) {
   try {
-    const { processId, processName, category, trajectory, logCount } = await request.json();
+    const { processId: encodedId, processName, category, trajectory, logCount } = await request.json();
 
-    if (!processId || !processName || !trajectory || logCount === undefined) {
+    if (!encodedId || !processName || !trajectory || logCount === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    const processId = decodeId(encodedId);
 
     // Check cache
     const { data: process, error: fetchError } = await supabaseAdmin

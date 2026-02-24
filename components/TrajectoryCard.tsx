@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { analyzeProcess } from '../lib/trajectory';
+import { AI_INSIGHT_MIN_LOGS, AI_INSIGHT_REFETCH_DELTA } from '../lib/constants';
+import { encodeId } from '../lib/obfuscate';
 import type { LogEntry } from '../lib/types';
 
 interface TrajectoryCardProps {
@@ -52,6 +54,10 @@ export function TrajectoryCard({ process, logs, onDelete }: TrajectoryCardProps)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Only refetch AI insight when log count drifts enough from last cached value
+  const logDelta = Math.abs(logs.length - (process.ai_insight_log_count ?? 0));
+  const shouldRefetch = logDelta >= AI_INSIGHT_REFETCH_DELTA && logs.length >= AI_INSIGHT_MIN_LOGS;
+
   useEffect(() => {
     // Clear pending debounce
     if (debounceTimerRef.current) {
@@ -63,18 +69,12 @@ export function TrajectoryCard({ process, logs, onDelete }: TrajectoryCardProps)
       abortControllerRef.current.abort();
     }
 
-    // Need 3+ logs for meaningful AI analysis
-    if (logs.length < 3) {
-      setAiTag(null);
-      setAiInsight(null);
-      setIsLoading(false);
-      return;
-    }
-
-    // Cache is still valid — no fetch needed
-    if (process.ai_insight_log_count === logs.length && process.ai_insight) {
-      setAiTag(process.ai_tag);
-      setAiInsight(process.ai_insight);
+    // Not enough logs or delta below threshold — use cached values
+    if (!shouldRefetch) {
+      if (process.ai_insight) {
+        setAiTag(process.ai_tag);
+        setAiInsight(process.ai_insight);
+      }
       setIsLoading(false);
       return;
     }
@@ -90,7 +90,7 @@ export function TrajectoryCard({ process, logs, onDelete }: TrajectoryCardProps)
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            processId: process.id,
+            processId: encodeId(process.id),
             processName: process.name,
             category: process.category,
             trajectory,
@@ -120,7 +120,7 @@ export function TrajectoryCard({ process, logs, onDelete }: TrajectoryCardProps)
         abortControllerRef.current.abort();
       }
     };
-  }, [process.id, process.name, process.category, process.ai_insight, process.ai_tag, process.ai_insight_log_count, logs.length]);
+  }, [shouldRefetch, process.id, process.name, process.category, process.ai_insight, process.ai_tag]);
 
   // Use AI tag if available, fall back to local status
   const displayTag = aiTag || trajectory.status.toUpperCase();

@@ -110,7 +110,7 @@ export function Dashboard() {
     // Debounced database write (300ms delay)
     const timeout = setTimeout(async () => {
       try {
-        const result = await toggleLog(processId, date);
+        const result = await toggleLog(processId, dateKey, shouldAdd);
         
         if (result.action === "added" && result.log) {
           // Replace optimistic log with real one
