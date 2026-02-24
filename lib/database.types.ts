@@ -2,6 +2,8 @@
 
 export interface Database {
   public: {
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
     Tables: {
       processes: {
         Row: {
@@ -43,6 +45,7 @@ export interface Database {
           ai_insight_log_count?: number | null;
           ai_insight_updated_at?: string | null;
         };
+        Relationships: [];
       };
       logs: {
         Row: {
@@ -63,6 +66,15 @@ export interface Database {
           logged_at?: string;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'logs_process_id_fkey';
+            columns: ['process_id'];
+            isOneToOne: false;
+            referencedRelation: 'processes';
+            referencedColumns: ['id'];
+          }
+        ];
       };
     };
   };

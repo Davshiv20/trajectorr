@@ -1,7 +1,7 @@
 // Data fetching functions for Supabase
 
 import { supabase } from './supabase';
-import type { Process, ProcessInsert, Log, LogInsert, Database } from './database.types';
+import type { Process, ProcessInsert, Log, LogInsert } from './database.types';
 
 // Fetch all processes for the current user
 export async function getProcesses(): Promise<Process[]> {
@@ -9,14 +9,15 @@ export async function getProcesses(): Promise<Process[]> {
     .from('processes')
     .select('*')
     .is('archived_at', null)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .returns<Process[]>();
 
   if (error) {
     console.error('Error fetching processes:', error);
     return [];
   }
 
-  return (data as Process[]) || [];
+  return data ?? [];
 }
 
 // Fetch logs only for active (non-archived) processes
@@ -45,10 +46,12 @@ export async function toggleLog(
   shouldAdd: boolean
 ): Promise<{ action: 'added' | 'removed'; log?: Log }> {
   if (shouldAdd) {
+    const insert: LogInsert = { process_id: processId, logged_at: dateKey };
     const { data, error } = await supabase
       .from('logs')
-      .insert({ process_id: processId, logged_at: dateKey } as LogInsert)
+      .insert(insert)
       .select()
+      .returns<Log[]>()
       .single();
 
     if (error) {
@@ -58,7 +61,7 @@ export async function toggleLog(
       throw error;
     }
 
-    return { action: 'added', log: data as Log };
+    return { action: 'added', log: data };
   }
 
   const { error } = await supabase
@@ -82,15 +85,12 @@ export async function createProcess(
   key: string,
   userId: string
 ): Promise<Process | null> {
+  const insert: ProcessInsert = { name, category, key, user_id: userId };
   const { data, error } = await supabase
     .from('processes')
-    .insert({
-      name,
-      category,
-      key,
-      user_id: userId,
-    } as any)
+    .insert(insert)
     .select()
+    .returns<Process[]>()
     .single();
 
   if (error) {
@@ -98,14 +98,13 @@ export async function createProcess(
     return null;
   }
 
-  return data as Process;
+  return data;
 }
 
 // Archive a process (soft delete)
 export async function archiveProcess(processId: string): Promise<boolean> {
   const { error } = await supabase
     .from('processes')
-    // @ts-ignore - Supabase type inference issue
     .update({ archived_at: new Date().toISOString() })
     .eq('id', processId);
 
