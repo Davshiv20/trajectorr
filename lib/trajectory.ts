@@ -5,9 +5,9 @@ import {
   DAYS_PER_WEEK,
   WEEKS_PER_MONTH,
   MIN_LOGS_FOR_ANALYSIS,
-  FREQUENCY_WINDOW_DAYS,
   TREND_UP_THRESHOLD,
   TREND_DOWN_THRESHOLD,
+  MIN_LIFETIME_FOR_TREND,
   CONSISTENCY_WINDOW_DAYS,
   DEFAULT_AVG_GAP_DAYS,
   MAX_RECENT_GAPS,
@@ -30,7 +30,10 @@ export function analyzeProcess(logs: LogEntry[]): ProcessTrajectory {
     return createDormantTrajectory(sortedLogs[0]?.logged_at);
   }
 
-  const frequency = calculateFrequency(sortedLogs, now);
+  const earliestLog = sortedLogs[sortedLogs.length - 1].logged_at;
+  const lifetimeDays = Math.max(1, Math.floor((now.getTime() - earliestLog.getTime()) / MS_PER_DAY));
+
+  const frequency = calculateFrequency(sortedLogs, lifetimeDays);
   const consistency = calculateConsistency(sortedLogs, now);
   const recency = calculateRecency(sortedLogs, now);
   const patterns = detectPatterns(sortedLogs);
@@ -49,24 +52,32 @@ export function analyzeProcess(logs: LogEntry[]): ProcessTrajectory {
   };
 }
 
-// --- Frequency ---
+// --- Frequency (lifetime-based) ---
 function calculateFrequency(
   logs: LogEntry[],
-  now: Date
+  lifetimeDays: number
 ): ProcessTrajectory['frequency'] {
-  const recentCutoff = new Date(now.getTime() - FREQUENCY_WINDOW_DAYS * MS_PER_DAY);
-  const recentLogs = logs.filter(l => l.logged_at >= recentCutoff);
-  const perWeek = (recentLogs.length / FREQUENCY_WINDOW_DAYS) * DAYS_PER_WEEK;
-
-  const previousCutoff = new Date(now.getTime() - FREQUENCY_WINDOW_DAYS * 2 * MS_PER_DAY);
-  const previousLogs = logs.filter(l =>
-    l.logged_at >= previousCutoff && l.logged_at < recentCutoff
-  );
-  const previousPerWeek = (previousLogs.length / FREQUENCY_WINDOW_DAYS) * DAYS_PER_WEEK;
+  const perWeek = (logs.length / lifetimeDays) * DAYS_PER_WEEK;
 
   let trend: 'up' | 'down' | 'stable' = 'stable';
-  if (perWeek > previousPerWeek * TREND_UP_THRESHOLD) trend = 'up';
-  else if (perWeek < previousPerWeek * TREND_DOWN_THRESHOLD) trend = 'down';
+
+  if (lifetimeDays >= MIN_LIFETIME_FOR_TREND) {
+    const halfLifetimeMs = (lifetimeDays / 2) * MS_PER_DAY;
+    const earliest = logs[logs.length - 1].logged_at;
+    const midpoint = new Date(earliest.getTime() + halfLifetimeMs);
+
+    const recentLogs = logs.filter(l => l.logged_at >= midpoint).length;
+    const olderLogs = logs.filter(l => l.logged_at < midpoint).length;
+
+    const halfDays = lifetimeDays / 2;
+    const recentRate = recentLogs / halfDays;
+    const olderRate = olderLogs / halfDays;
+
+    if (olderRate > 0) {
+      if (recentRate > olderRate * TREND_UP_THRESHOLD) trend = 'up';
+      else if (recentRate < olderRate * TREND_DOWN_THRESHOLD) trend = 'down';
+    }
+  }
 
   return {
     perWeek: Math.round(perWeek * 10) / 10,

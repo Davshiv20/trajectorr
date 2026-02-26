@@ -7,12 +7,12 @@ export const WEEKS_PER_MONTH = 4.33;
 export const MIN_LOGS_FOR_ANALYSIS = 2;
 
 // ── Frequency ──
-export const FREQUENCY_WINDOW_DAYS = 14;
 export const TREND_UP_THRESHOLD = 1.2;
 export const TREND_DOWN_THRESHOLD = 0.8;
+export const MIN_LIFETIME_FOR_TREND = 14;
 
 // ── Consistency ──
-export const CONSISTENCY_WINDOW_DAYS = 14;
+export const CONSISTENCY_WINDOW_DAYS = 30;
 
 // ── Recency ──
 export const DEFAULT_AVG_GAP_DAYS = 7;
